@@ -295,7 +295,7 @@ int main(void) {
   /* USER CODE END Init */
 
   /* Configure the system clock */
-  SystemClock_CustomConfig(true, false);
+  SystemClock_CustomConfig(false, true);
 
   /* USER CODE BEGIN SysInit */
 
@@ -308,10 +308,11 @@ int main(void) {
   // Then initialize other peripherals
   MX_RNG_Init();
   MX_LPUART1_UART_Init();
-  SetupMPU(); // comment out this line during on-chip debugging
+  //SetupMPU(); // comment out this line during on-chip debugging
   /* USER CODE BEGIN 2 */
-  in_nfc_mode = 1; // boot in NFC mode by default
-  nfc_init();
+  config_usb_mode();
+  in_nfc_mode = 0; // boot in NFC mode by default
+  //nfc_init();
   set_nfc_state(in_nfc_mode);
 
   DBG_MSG("Init FS\n");
