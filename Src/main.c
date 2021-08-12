@@ -340,7 +340,7 @@ int main(void) {
     } else {
       if ((i & ((1 << 23) - 1)) == 0) {
         DBG_MSG("Touch calibrating...\n");
-        GPIO_Touch_Calibrate();
+        // GPIO_Touch_Calibrate();
       }
       device_loop(1);
       DBG_MSG("device_loop...\n");
