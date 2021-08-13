@@ -312,8 +312,8 @@ int main(void) {
   SetupMPU(); // comment out this line during on-chip debugging
   /* USER CODE BEGIN 2 */
   in_nfc_mode = 1; // boot in NFC mode by default
-  nfc_init();
-  set_nfc_state(in_nfc_mode);
+  // nfc_init();
+  // set_nfc_state(in_nfc_mode);
 
   DBG_MSG("Init FS\n");
   littlefs_init();
@@ -328,22 +328,24 @@ int main(void) {
   /* USER CODE BEGIN WHILE */
   for (uint32_t i = 0;;) {
     /* USER CODE END WHILE */
-
+    DBG_MSG("M\n");
     /* USER CODE BEGIN 3 */
     if (in_nfc_mode) {
-      nfc_loop();
+      DBG_MSG("I\n");
+      // nfc_loop();
       if (detect_usb()) { // USB plug-in
         config_usb_mode();
         in_nfc_mode = 0;
-        set_nfc_state(in_nfc_mode); // comment out this line to emulate NFC mode with USB connection
+        // set_nfc_state(in_nfc_mode); // comment out this line to emulate NFC mode with USB connection
       }
     } else {
+      DBG_MSG("D\n");
       if ((i & ((1 << 23) - 1)) == 0) {
         DBG_MSG("Touch calibrating...\n");
         // GPIO_Touch_Calibrate();
       }
       device_loop(1);
-      DBG_MSG("device_loop...\n");
+      
       ++i;
     }
   }
