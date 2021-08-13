@@ -347,11 +347,11 @@ int main(void) {
       }
     } else {
       // DBG_MSG("D\n");
-      if ((i & ((1 << 23) - 1)) == 0) {
-        DBG_MSG("Touch calibrating...\n");
-        // GPIO_Touch_Calibrate();
-      }
-      // device_loop(1);
+      // if ((i & ((1 << 23) - 1)) == 0) {
+      //   DBG_MSG("Touch calibrating...\n");
+      //   GPIO_Touch_Calibrate();
+      // }
+      device_loop(1);
       
       ++i;
     }
