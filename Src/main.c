@@ -311,7 +311,7 @@ static void config_usb_mode(void) {
 
   usb_device_init();
   // enable the device_periodic_task, which controls LED and Touch sensing
-  device_loop_enable = 1;
+  //device_loop_enable = 1;
 }
 /* USER CODE END 0 */
 
