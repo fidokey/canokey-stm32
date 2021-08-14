@@ -306,12 +306,12 @@ static void config_usb_mode(void) {
   DBG_MSG("Init USB\n");
   SystemClock_CustomConfig(false, true);
   // reconfig peripheral clock dividers
-  //LL_SPI_SetBaudRatePrescaler(hspi1.Instance, LL_SPI_BAUDRATEPRESCALER_DIV8);
-  //MX_USART1_UART_Init();
+  // LL_SPI_SetBaudRatePrescaler(hspi1.Instance, LL_SPI_BAUDRATEPRESCALER_DIV8);
+  MX_USART1_UART_Init();
 
   usb_device_init();
   // enable the device_periodic_task, which controls LED and Touch sensing
-  //device_loop_enable = 1;
+  // device_loop_enable = 1;
 }
 /* USER CODE END 0 */
 
@@ -374,12 +374,19 @@ int main(void) {
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint32_t last_tick = 0, now = 0;
   for (uint32_t i = 0;;) {
     /* USER CODE END WHILE */
     // DBG_MSG("M\n");
+    now = HAL_GetTick();
+
+    if (now - last_tick >= 1000) {
+      DBG_MSG("Tick %lu", now / 1000);
+      last_tick = now;
+    }
     /* USER CODE BEGIN 3 */
     if (in_nfc_mode) {
-      DBG_MSG("I\n");
+      // DBG_MSG("I\n");
       // nfc_loop();
       if (detect_usb()) { // USB plug-in
         config_usb_mode();
@@ -388,10 +395,10 @@ int main(void) {
       }
     } else {
       // DBG_MSG("D\n");
-      if ((i & ((1 << 23) - 1)) == 0) {
-        // DBG_MSG("Touch calibrating...\n");
-        // GPIO_Touch_Calibrate();
-      }
+      // if ((i & ((1 << 23) - 1)) == 0) {
+      //   DBG_MSG("Touch calibrating...\n");
+      //   GPIO_Touch_Calibrate();
+      // }
       device_loop(1);
 
       ++i;
