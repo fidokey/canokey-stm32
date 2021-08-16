@@ -24,10 +24,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "stm32l4xx_ll_spi.h"
 #include "device-config.h"
 #include "device-stm32.h"
 #include "lfs_init.h"
+#include "stm32l4xx_ll_spi.h"
 #include <applets.h>
 #include <ccid.h>
 #include <device.h>
@@ -50,7 +50,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-UART_HandleTypeDef hlpuart1;
+UART_HandleTypeDef huart1;
 
 RNG_HandleTypeDef hrng;
 
@@ -64,12 +64,12 @@ uint32_t device_loop_enable;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-void SystemClock_Config(void);
+// void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_RNG_Init(void);
 static void MX_SPI1_Init(void);
 // static void MX_TIM6_Init(void);
-static void MX_LPUART1_UART_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -169,7 +169,46 @@ int SetupMPU(void) {
   return 0;
 }
 
-// Initial system clock profile. 
+void SystemClock_Config(void) {
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+  /** Configure the main internal regulator output voltage
+   */
+  if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK) {
+    Error_Handler();
+  }
+  /** Initializes the RCC Oscillators according to the specified parameters
+   * in the RCC_OscInitTypeDef structure.
+   */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
+  RCC_OscInitStruct.MSIState = RCC_MSI_ON;
+  RCC_OscInitStruct.MSICalibrationValue = 0;
+  RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
+  RCC_OscInitStruct.PLL.PLLM = 1;
+  RCC_OscInitStruct.PLL.PLLN = 40;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
+  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
+  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+    Error_Handler();
+  }
+  /** Initializes the CPU, AHB and APB buses clocks
+   */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK) {
+    Error_Handler();
+  }
+}
+
+// Initial system clock profile.
 // In NFC (low-power) mode: SYSCLK is 32MHz currently
 // In USB mode: SYSCLK is 80MHz
 void SystemClock_CustomConfig(bool nfc_low_power, bool pll_reconfig) {
@@ -221,14 +260,15 @@ void SystemClock_CustomConfig(bool nfc_low_power, bool pll_reconfig) {
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV4; // PCLK2 affects SPI1
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, flash_wait) != HAL_OK) Error_Handler();
 
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_LPUART1 | RCC_PERIPHCLK_RNG;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1 | RCC_PERIPHCLK_RNG;
   if (nfc_low_power) {
     PeriphClkInit.RngClockSelection = RCC_RNGCLKSOURCE_PLL;
   } else {
     PeriphClkInit.PeriphClockSelection |= RCC_PERIPHCLK_USB;
     PeriphClkInit.RngClockSelection = RCC_USBCLKSOURCE_HSI48;
   }
-  PeriphClkInit.Lpuart1ClockSelection = RCC_LPUART1CLKSOURCE_PCLK1;
+
+  PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
   PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) Error_Handler();
 
@@ -266,12 +306,12 @@ static void config_usb_mode(void) {
   DBG_MSG("Init USB\n");
   SystemClock_CustomConfig(false, true);
   // reconfig peripheral clock dividers
-  LL_SPI_SetBaudRatePrescaler(hspi1.Instance, LL_SPI_BAUDRATEPRESCALER_DIV8);
-  MX_LPUART1_UART_Init();
+  // LL_SPI_SetBaudRatePrescaler(hspi1.Instance, LL_SPI_BAUDRATEPRESCALER_DIV8);
+  MX_USART1_UART_Init();
 
   usb_device_init();
   // enable the device_periodic_task, which controls LED and Touch sensing
-  device_loop_enable = 1;
+  // device_loop_enable = 1;
 }
 /* USER CODE END 0 */
 
@@ -307,13 +347,9 @@ int main(void) {
   MX_SPI1_Init();
   // Then initialize other peripherals
   MX_RNG_Init();
-  MX_LPUART1_UART_Init();
-  //SetupMPU(); // comment out this line during on-chip debugging
+  MX_USART1_UART_Init();
+  // SetupMPU(); // comment out this line during on-chip debugging
   /* USER CODE BEGIN 2 */
-  config_usb_mode();
-  in_nfc_mode = 0; // boot in NFC mode by default
-  //nfc_init();
-  set_nfc_state(in_nfc_mode);
 
   DBG_MSG("Init FS\n");
   littlefs_init();
@@ -321,28 +357,49 @@ int main(void) {
   DBG_MSG("Init applets\n");
   applets_install();
 
+  in_nfc_mode = 0; // boot in NFC mode by default
+  // nfc_init();
+  set_nfc_state(in_nfc_mode);
+  DBG_MSG("Checking USB\n");
+  if (detect_usb()) {
+    DBG_MSG("USB Detected\n");
+    config_usb_mode();
+  } else {
+    DBG_MSG("USB NOT Detected\n");
+  }
+
   DBG_MSG("Main Loop\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint32_t last_tick = 0, now = 0;
   for (uint32_t i = 0;;) {
     /* USER CODE END WHILE */
+    // DBG_MSG("M\n");
+    now = HAL_GetTick();
 
+    if (now - last_tick >= 1000) {
+      DBG_MSG("Tick %lu", now / 1000);
+      last_tick = now;
+    }
     /* USER CODE BEGIN 3 */
     if (in_nfc_mode) {
-      nfc_loop();
+      // DBG_MSG("I\n");
+      // nfc_loop();
       if (detect_usb()) { // USB plug-in
         config_usb_mode();
         in_nfc_mode = 0;
-        set_nfc_state(in_nfc_mode); // comment out this line to emulate NFC mode with USB connection
+        // set_nfc_state(in_nfc_mode); // comment out this line to emulate NFC mode with USB connection
       }
     } else {
-      if ((i & ((1 << 23) - 1)) == 0) {
-        DBG_MSG("Touch calibrating...\n");
-        GPIO_Touch_Calibrate();
-      }
+      // DBG_MSG("D\n");
+      // if ((i & ((1 << 23) - 1)) == 0) {
+      //   DBG_MSG("Touch calibrating...\n");
+      //   GPIO_Touch_Calibrate();
+      // }
       device_loop(1);
+
       ++i;
     }
   }
@@ -350,37 +407,35 @@ int main(void) {
 }
 
 /**
-  * @brief LPUART1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_LPUART1_UART_Init(void)
-{
+ * @brief USART1 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_USART1_UART_Init(void) {
 
-  /* USER CODE BEGIN LPUART1_Init 0 */
+  /* USER CODE BEGIN USART1_Init 0 */
 
-  /* USER CODE END LPUART1_Init 0 */
+  /* USER CODE END USART1_Init 0 */
 
-  /* USER CODE BEGIN LPUART1_Init 1 */
+  /* USER CODE BEGIN USART1_Init 1 */
 
-  /* USER CODE END LPUART1_Init 1 */
-  hlpuart1.Instance = LPUART1;
-  hlpuart1.Init.BaudRate = 115200;
-  hlpuart1.Init.WordLength = UART_WORDLENGTH_8B;
-  hlpuart1.Init.StopBits = UART_STOPBITS_1;
-  hlpuart1.Init.Parity = UART_PARITY_NONE;
-  hlpuart1.Init.Mode = UART_MODE_TX_RX;
-  hlpuart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  hlpuart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  hlpuart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&hlpuart1) != HAL_OK)
-  {
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK) {
     Error_Handler();
   }
-  /* USER CODE BEGIN LPUART1_Init 2 */
+  /* USER CODE BEGIN USART1_Init 2 */
 
-  /* USER CODE END LPUART1_Init 2 */
-
+  /* USER CODE END USART1_Init 2 */
 }
 
 /**
