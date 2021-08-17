@@ -311,7 +311,7 @@ static void config_usb_mode(void) {
 
   usb_device_init();
   // enable the device_periodic_task, which controls LED and Touch sensing
-  // device_loop_enable = 1;
+  device_loop_enable = 1;
 }
 /* USER CODE END 0 */
 
@@ -379,8 +379,8 @@ int main(void) {
     // DBG_MSG("M\n");
     now = HAL_GetTick();
 
-    if (now - last_tick >= 1000) {
-      DBG_MSG("Tick %lu", now / 1000);
+    if (now - last_tick >= 10000) {
+      DBG_MSG("Tick %lu\n", now / 10000);
       last_tick = now;
     }
     /* USER CODE BEGIN 3 */
@@ -398,7 +398,7 @@ int main(void) {
       //   DBG_MSG("Touch calibrating...\n");
       //   GPIO_Touch_Calibrate();
       // }
-      device_loop(1);
+      device_loop(0);
 
       ++i;
     }
