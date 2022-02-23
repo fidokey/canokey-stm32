@@ -27,7 +27,7 @@
 #include "device-config.h"
 #include "device-stm32.h"
 #include "lfs_init.h"
-#include "stm32l4xx_ll_spi.h"
+#include <apdu.h>
 #include <applets.h>
 #include <ccid.h>
 #include <device.h>
@@ -356,6 +356,7 @@ int main(void) {
 
   DBG_MSG("Init applets\n");
   applets_install();
+  init_apdu_buffer();
 
   in_nfc_mode = 0; // boot in NFC mode by default
   // nfc_init();
