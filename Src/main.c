@@ -314,7 +314,7 @@ int main(void) {
   MX_LPUART1_UART_Init();
   SetupMPU(); // comment out this line during on-chip debugging
   /* USER CODE BEGIN 2 */
-  in_nfc_mode = 0; // boot in NFC mode by default
+  in_nfc_mode = 1; // boot in NFC mode by default
   //nfc_init();
   //set_nfc_state(in_nfc_mode);
 
