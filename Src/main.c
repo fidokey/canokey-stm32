@@ -314,9 +314,9 @@ int main(void) {
   MX_LPUART1_UART_Init();
   SetupMPU(); // comment out this line during on-chip debugging
   /* USER CODE BEGIN 2 */
-  in_nfc_mode = 1; // boot in NFC mode by default
-  nfc_init();
-  set_nfc_state(in_nfc_mode);
+  in_nfc_mode = 0; // boot in NFC mode by default
+  //nfc_init();
+  //set_nfc_state(in_nfc_mode);
 
   DBG_MSG("Init FS\n");
   littlefs_init();
@@ -342,7 +342,7 @@ int main(void) {
       if (detect_usb()) { // USB plug-in
         config_usb_mode();
         in_nfc_mode = 0;
-        set_nfc_state(in_nfc_mode); // comment out this line to emulate NFC mode with USB connection
+        //set_nfc_state(in_nfc_mode); // comment out this line to emulate NFC mode with USB connection
       }
     } else {
       if ((i & ((1 << 23) - 1)) == 0) {
@@ -484,7 +484,7 @@ static void MX_GPIO_Init(void) {
 
   /*Configure GPIO pin : LED_Pin */
   GPIO_InitStruct.Pin = LED_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
@@ -492,7 +492,7 @@ static void MX_GPIO_Init(void) {
   /*Configure GPIO pin : TOUCH_Pin */
   GPIO_InitStruct.Pin = TOUCH_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(TOUCH_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/

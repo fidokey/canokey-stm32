@@ -87,35 +87,37 @@ void GPIO_Touch_Calibrate(void) {
 }
 
 static GPIO_PinState GPIO_Touched(void) {
-#ifdef DEBUG_OUTPUT
-  // Emulate touch events with UART input
-  if (LL_LPUART_IsActiveFlag_RXNE(DBG_UART.Instance)) {
-    int data = LL_LPUART_ReceiveData8(DBG_UART.Instance);
-    // DBG_MSG("%x\n", data);
-    if ('U' == data) return GPIO_PIN_SET;
-  }
-#endif
-  uint32_t counter = 0;
-  LL_GPIO_SetPinMode(TOUCH_GPIO_Port, TOUCH_Pin, GPIO_MODE_OUTPUT_PP);
-  LL_GPIO_SetOutputPin(TOUCH_GPIO_Port, TOUCH_Pin);
-  // charging the capacitor (human body)
-  for (int i = 0; i < 100; ++i)
-    asm volatile("nop");
+// #ifdef DEBUG_OUTPUT
+//   // Emulate touch events with UART input
+//   if (LL_LPUART_IsActiveFlag_RXNE(DBG_UART.Instance)) {
+//     int data = LL_LPUART_ReceiveData8(DBG_UART.Instance);
+//     // DBG_MSG("%x\n", data);
+//     if ('U' == data) return GPIO_PIN_SET;
+//   }
+// #endif
+//   uint32_t counter = 0;
+//   LL_GPIO_SetPinMode(TOUCH_GPIO_Port, TOUCH_Pin, GPIO_MODE_OUTPUT_PP);
+//   LL_GPIO_SetOutputPin(TOUCH_GPIO_Port, TOUCH_Pin);
+//   // charging the capacitor (human body)
+//   for (int i = 0; i < 100; ++i)
+//     asm volatile("nop");
 
-  __disable_irq();
-  // measure the time of discharging
-  LL_GPIO_SetPinMode(TOUCH_GPIO_Port, TOUCH_Pin, GPIO_MODE_INPUT);
-  while ((LL_GPIO_ReadInputPort(TOUCH_GPIO_Port) & TOUCH_Pin) /*  && counter <= touch_threshold */)
-    ++counter;
-  __enable_irq();
+//   __disable_irq();
+//   // measure the time of discharging
+//   LL_GPIO_SetPinMode(TOUCH_GPIO_Port, TOUCH_Pin, GPIO_MODE_INPUT);
+//   while ((LL_GPIO_ReadInputPort(TOUCH_GPIO_Port) & TOUCH_Pin) /*  && counter <= touch_threshold */)
+//     ++counter;
+//   __enable_irq();
 
-  if (counter > measure_touch) measure_touch = counter;
-  return counter > touch_threshold ? GPIO_PIN_SET : GPIO_PIN_RESET;
+//   if (counter > measure_touch) measure_touch = counter;
+//  return counter > touch_threshold ? GPIO_PIN_SET : GPIO_PIN_RESET;
+//  return (0  == (LL_GPIO_ReadInputPort(TOUCH_GPIO_Port) & TOUCH_Pin));
+  return !HAL_GPIO_ReadPin(TOUCH_GPIO_Port, TOUCH_Pin);
 }
 
-void led_on(void) { HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET); }
+void led_on(void) { HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET); }
 
-void led_off(void) { HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET); }
+void led_off(void) { HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET); }
 
 void device_periodic_task(void) {
   static uint32_t last_touched_at = 0, deassert_at = ~0u;
