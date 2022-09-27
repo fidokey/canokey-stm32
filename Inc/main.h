@@ -65,7 +65,7 @@ void SystemClock_CustomConfig(bool nfc_low_power, bool pll_reconfig);
 #define FM_IRQN_EXTI_IRQn EXTI0_IRQn
 #define FM_SSN_Pin GPIO_PIN_0
 #define FM_SSN_GPIO_Port GPIOB
-#define LED_Pin GPIO_PIN_5
+#define LED_Pin GPIO_PIN_8
 #define LED_GPIO_Port GPIOA
 #define TOUCH_Pin GPIO_PIN_0
 #define TOUCH_GPIO_Port GPIOA
