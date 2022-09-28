@@ -1,3 +1,5 @@
 [submodule "canokey-core"]
 	path = canokey-core
-	url = https://github.com/canokeys/canokey-core.git
+	url = git@github.com:fidokey/canokey-core.git
+	branch = fidokey
+
